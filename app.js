@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Interval reference
     let interval;
+    // Flag to track if time limit has been reached
+    let timeLimitReached = false;
 
     // Event handlers
     function togglePlay() {
@@ -62,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.countdown = 4;
             state.count = 0;
             state.sessionComplete = false;
+            timeLimitReached = false;
             startInterval();
         } else {
             clearInterval(interval);
@@ -76,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimit = '';
+        timeLimitReached = false;
         clearInterval(interval);
         render();
     }
@@ -97,37 +101,46 @@ document.addEventListener('DOMContentLoaded', () => {
         state.countdown = 4;
         state.count = 0;
         state.sessionComplete = false;
+        timeLimitReached = false;
         startInterval();
         render();
+    }
+
+    function shouldEndSession() {
+        // If we're at the end of an exhale phase and time limit has been reached
+        if (timeLimitReached && state.count === 2 && state.countdown === 1) {
+            return true;
+        }
+        return false;
     }
 
     function startInterval() {
         clearInterval(interval);
         interval = setInterval(() => {
             if (state.countdown === 1) {
+                // About to change phase
+                const currentPhase = state.count;
                 state.count = (state.count + 1) % 4;
                 playTone();
                 state.countdown = 4;
+                
+                // If we just completed an exhale phase (count was 2) and time limit is reached
+                if (currentPhase === 2 && timeLimitReached) {
+                    state.sessionComplete = true;
+                    state.isPlaying = false;
+                    clearInterval(interval);
+                }
             } else {
                 state.countdown -= 1;
             }
             
             state.totalTime += 1;
             
-            if (state.timeLimit) {
+            // Check if time limit has been reached
+            if (state.timeLimit && !timeLimitReached) {
                 const timeLimitSeconds = parseInt(state.timeLimit) * 60;
                 if (state.totalTime >= timeLimitSeconds) {
-                    // Check if we're at the end of an exhale or need to continue to the next one
-                    if (state.count === 2 && state.countdown === 1) {
-                        state.sessionComplete = true;
-                        state.isPlaying = false;
-                        clearInterval(interval);
-                    } else if (state.totalTime >= timeLimitSeconds + 12) {
-                        // Force end after one more full cycle if we've gone too far
-                        state.sessionComplete = true;
-                        state.isPlaying = false;
-                        clearInterval(interval);
-                    }
+                    timeLimitReached = true;
                 }
             }
             
@@ -147,6 +160,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="instruction">${getInstruction(state.count)}</div>
                 <div class="countdown">${state.countdown}</div>
             `;
+            
+            // Show a message if time limit has been reached but we're waiting to complete the exhale
+            if (timeLimitReached) {
+                html += `<div class="time-limit-message">Completing current cycle...</div>`;
+            }
         }
 
         if (!state.isPlaying && !state.sessionComplete) {
