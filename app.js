@@ -126,3 +126,85 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render function
     function render() {
         let html = `
+            <h1>Box Breathing</h1>
+        `;
+
+        if (state.isPlaying) {
+            html += `
+                <div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
+                <div class="instruction">${getInstruction(state.count)}</div>
+                <div class="countdown">${state.countdown}</div>
+            `;
+        }
+
+        if (!state.isPlaying && !state.sessionComplete) {
+            html += `
+                <div class="settings">
+                    <div class="form-group">
+                        <label class="switch">
+                            <input type="checkbox" id="sound-toggle" ${state.soundEnabled ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                        <label for="sound-toggle">
+                            ${state.soundEnabled ? icons.volume2 : icons.volumeX}
+                            Sound ${state.soundEnabled ? 'On' : 'Off'}
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            placeholder="Time limit (minutes)"
+                            value="${state.timeLimit}"
+                            id="time-limit"
+                        >
+                        <label for="time-limit">Minutes (optional)</label>
+                    </div>
+                </div>
+                <div class="prompt">Press start to begin</div>
+            `;
+        }
+
+        if (state.sessionComplete) {
+            html += `<div class="complete">Complete!</div>`;
+        }
+
+        if (!state.sessionComplete) {
+            html += `
+                <button id="toggle-play">
+                    ${state.isPlaying ? icons.pause : icons.play}
+                    ${state.isPlaying ? 'Pause' : 'Start'}
+                </button>
+            `;
+        }
+
+        if (state.sessionComplete) {
+            html += `
+                <button id="reset">
+                    ${icons.rotateCcw}
+                    Back to Start
+                </button>
+            `;
+        }
+
+        app.innerHTML = html;
+
+        // Add event listeners after DOM update
+        if (!state.sessionComplete) {
+            document.getElementById('toggle-play').addEventListener('click', togglePlay);
+        }
+        
+        if (state.sessionComplete) {
+            document.getElementById('reset').addEventListener('click', resetToStart);
+        }
+        
+        if (!state.isPlaying && !state.sessionComplete) {
+            document.getElementById('sound-toggle').addEventListener('change', toggleSound);
+            document.getElementById('time-limit').addEventListener('input', handleTimeLimitChange);
+        }
+    }
+
+    // Initial render
+    render();
+});
