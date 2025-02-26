@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pause: `<svg class="icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`,
         volume2: `<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`,
         volumeX: `<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`,
-        rotateCcw: `<svg class="icon" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`
+        rotateCcw: `<svg class="icon" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`,
+        clock: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
     };
 
     // Helper functions
@@ -86,6 +87,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleTimeLimitChange(e) {
         state.timeLimit = e.target.value.replace(/[^0-9]/g, '');
+        render();
+    }
+
+    function startWithPreset(minutes) {
+        state.timeLimit = minutes.toString();
+        state.isPlaying = true;
+        state.totalTime = 0;
+        state.countdown = 4;
+        state.count = 0;
+        state.sessionComplete = false;
+        startInterval();
         render();
     }
 
@@ -188,6 +200,23 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
+        // Add shortcut buttons for preset times
+        if (!state.isPlaying && !state.sessionComplete) {
+            html += `
+                <div class="shortcut-buttons">
+                    <button id="preset-2min" class="preset-button">
+                        ${icons.clock} 2 min
+                    </button>
+                    <button id="preset-5min" class="preset-button">
+                        ${icons.clock} 5 min
+                    </button>
+                    <button id="preset-10min" class="preset-button">
+                        ${icons.clock} 10 min
+                    </button>
+                </div>
+            `;
+        }
+
         app.innerHTML = html;
 
         // Add event listeners after DOM update
@@ -202,6 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.isPlaying && !state.sessionComplete) {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
             document.getElementById('time-limit').addEventListener('input', handleTimeLimitChange);
+            
+            // Add event listeners for shortcut buttons
+            document.getElementById('preset-2min').addEventListener('click', () => startWithPreset(2));
+            document.getElementById('preset-5min').addEventListener('click', () => startWithPreset(5));
+            document.getElementById('preset-10min').addEventListener('click', () => startWithPreset(10));
         }
     }
 
