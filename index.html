@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box Breathing</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        /* Base styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            color: #ffedd5; /* amber-100 */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #fcd34d; /* amber-300 */
+        }
+
+        .instruction {
+            font-size: 1.875rem;
+            margin-bottom: 1rem;
+            color: #fdba74; /* orange-300 */
+        }
+
+        .countdown {
+            font-size: 3.75rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #f87171; /* red-400 */
+        }
+
+        .prompt {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #fde68a; /* amber-200 */
+        }
+
+        .complete {
+            font-size: 1.875rem;
+            margin-bottom: 2rem;
+            color: #4ade80; /* green-400 */
+        }
+
+        .timer {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: #fde68a; /* amber-200 */
+        }
+
+        /* Form elements */
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 0.5rem;
+        }
+
+        .settings {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        input[type="text"] {
+            background-color: #78350f; /* amber-900 */
+            color: #ffedd5; /* amber-100 */
+            border: 1px solid #d97706; /* amber-600 */
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 16px;
+        }
+
+        label {
+            color: #fde68a; /* amber-200 */
+            display: flex;
+            align-items: center;
+        }
+
+        /* Button styles */
+        button {
+            font-size: 1.25rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #d97706; /* amber-600 */
+            color: black;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: #b45309; /* amber-700 */
+        }
+
+        /* Switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #374151; /* gray-700 */
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #d97706; /* amber-600 */
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Icon styles */
+        .icon {
+            display: inline-block;
+            vertical-align: middle;
+            width: 24px;
+            height: 24px;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <!-- App content will be dynamically inserted here -->
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
