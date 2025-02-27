@@ -17,6 +17,8 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
 });
 
 // Activate event - clean up old caches
@@ -31,6 +33,9 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      // Take control of all clients as soon as it activates
+      return self.clients.claim();
     })
   );
 });
@@ -73,4 +78,11 @@ self.addEventListener('fetch', event => {
           });
       })
   );
+});
+
+// Handle messages from clients
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
