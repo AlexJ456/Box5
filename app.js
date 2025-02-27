@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleTimeLimitChange(e) {
+        // Update state but don't re-render
         state.timeLimit = e.target.value.replace(/[^0-9]/g, '');
-        render();
     }
 
     function startWithPreset(minutes) {
@@ -235,7 +235,20 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!state.isPlaying && !state.sessionComplete) {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
-            document.getElementById('time-limit').addEventListener('input', handleTimeLimitChange);
+            
+            // Add input event listener without triggering re-render
+            const timeLimitInput = document.getElementById('time-limit');
+            timeLimitInput.addEventListener('input', handleTimeLimitChange);
+            
+            // Focus and selection handling to prevent keyboard dismissal
+            timeLimitInput.addEventListener('focus', function() {
+                // Prevent iOS from dismissing keyboard
+                this.setAttribute('readonly', 'readonly');
+                // Remove readonly to allow editing
+                setTimeout(() => {
+                    this.removeAttribute('readonly');
+                }, 0);
+            });
             
             // Add event listeners for shortcut buttons
             document.getElementById('preset-2min').addEventListener('click', () => startWithPreset(2));
