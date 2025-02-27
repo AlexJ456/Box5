@@ -68,6 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
             state.count = 0;
             state.sessionComplete = false;
             state.timeLimitReached = false;
+            // Play tone at the beginning of the first phase
+            playTone();
             startInterval();
         } else {
             clearInterval(interval);
@@ -105,6 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimitReached = false;
+        // Play tone at the beginning of the first phase
+        playTone();
         startInterval();
         render();
     }
@@ -127,8 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (state.countdown === 1) {
                 // We're about to change phases
                 state.count = (state.count + 1) % 4;
-                playTone();
                 state.countdown = 4;
+                
+                // Play tone at the beginning of each new phase
+                playTone();
                 
                 // If we just completed an exhale (moving from count 2 to count 3) and time limit is reached
                 if (state.count === 3 && state.timeLimitReached) {
