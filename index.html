@@ -205,11 +205,51 @@
         .preset-button:hover {
             background-color: #78350f; /* amber-900 */
         }
+        
+        /* Install button */
+        #install-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        #install-button {
+            background-color: #d97706;
+            color: black;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* Offline notification */
+        #offline-notification {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #92400e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <div id="offline-notification">You are offline, but the app will work normally</div>
     <div class="container" id="app">
         <!-- App content will be dynamically inserted here -->
+    </div>
+
+    <div id="install-container">
+      <button id="install-button">
+        Install App
+      </button>
     </div>
 
     <script src="app.js"></script>
@@ -226,6 +266,55 @@
                     });
             });
         }
+        
+        // Check for online/offline status
+        window.addEventListener('online', function() {
+            document.getElementById('offline-notification').style.display = 'none';
+        });
+        
+        window.addEventListener('offline', function() {
+            document.getElementById('offline-notification').style.display = 'block';
+            // Hide after 3 seconds
+            setTimeout(function() {
+                document.getElementById('offline-notification').style.display = 'none';
+            }, 3000);
+        });
+        
+        // Installation for Microsoft Edge and other browsers
+        let deferredPrompt;
+        const installContainer = document.getElementById('install-container');
+        const installButton = document.getElementById('install-button');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install button
+            installContainer.style.display = 'block';
+        });
+
+        installButton.addEventListener('click', () => {
+            // Hide the install button
+            installContainer.style.display = 'none';
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        });
+
+        // Handle installed event
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed', evt);
+            installContainer.style.display = 'none';
+        });
     </script>
 </body>
 </html>
