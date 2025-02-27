@@ -42,13 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function playTone() {
         if (state.soundEnabled) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // 440 Hz is A4
-            oscillator.connect(audioContext.destination);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1); // Play for 0.1 seconds
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // 440 Hz is A4
+                oscillator.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1); // Play for 0.1 seconds
+            } catch (e) {
+                console.error('Error playing tone:', e);
+            }
         }
     }
 
@@ -240,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const timeLimitInput = document.getElementById('time-limit');
             timeLimitInput.addEventListener('input', handleTimeLimitChange);
             
-            // Focus and selection handling to prevent keyboard dismissal
+            // Focus and selection handling to prevent keyboard dismissal on iOS
             timeLimitInput.addEventListener('focus', function() {
                 // Prevent iOS from dismissing keyboard
                 this.setAttribute('readonly', 'readonly');
@@ -256,6 +260,29 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('preset-10min').addEventListener('click', () => startWithPreset(10));
         }
     }
+
+    // Check if app is running in standalone mode (installed)
+    function isRunningStandalone() {
+        return (window.matchMedia('(display-mode: standalone)').matches) || 
+               (window.navigator.standalone) || 
+               document.referrer.includes('android-app://');
+    }
+
+    // Add offline capability check
+    function updateOfflineStatus() {
+        const offlineNotification = document.getElementById('offline-notification');
+        if (!navigator.onLine && offlineNotification) {
+            offlineNotification.style.display = 'block';
+            setTimeout(() => {
+                offlineNotification.style.display = 'none';
+            }, 3000);
+        }
+    }
+
+    // Check offline status on load
+    window.addEventListener('load', updateOfflineStatus);
+    window.addEventListener('online', updateOfflineStatus);
+    window.addEventListener('offline', updateOfflineStatus);
 
     // Initial render
     render();
