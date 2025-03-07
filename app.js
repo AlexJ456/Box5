@@ -177,16 +177,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear on start
             animate.previousPosition = {x: currentX, y: currentY};
         }
-        // Add shadow for glow effect to enhance visibility
-        ctx.shadowColor = '#f59e0b'; // Lighter orange for glow
-        ctx.shadowBlur = 5;
+        // Add glow effect to trace
+        ctx.shadowColor = '#f59e0b'; // Lighter orange glow
+        ctx.shadowBlur = 8;
         ctx.strokeStyle = '#d97706'; // Original warm orange
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 6; // Increased to 6 for thicker trace
         ctx.beginPath();
         ctx.moveTo(animate.previousPosition.x, animate.previousPosition.y);
         ctx.lineTo(currentX, currentY);
         ctx.stroke();
-        // Reset shadow to avoid affecting other drawings
+        // Reset shadow
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         animate.previousPosition = {x: currentX, y: currentY};
