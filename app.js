@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelAnimationFrame(animationFrameId);
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            animate.previousPosition = null; // Reset to prevent residual lines
+            animate.previousPosition = null;
         }
         render();
     }
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelAnimationFrame(animationFrameId);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        animate.previousPosition = null; // Reset to prevent residual lines
+        animate.previousPosition = null;
         render();
     }
 
@@ -171,18 +171,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const endPoint = points[(phase + 1) % 4];
         const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
         const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.01)'; // Stronger fade
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.01)'; // Fade effect
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         if (!animate.previousPosition) {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear on start
             animate.previousPosition = {x: currentX, y: currentY};
         }
-        ctx.strokeStyle = '#d97706';
+        // Add shadow for glow effect to enhance visibility
+        ctx.shadowColor = '#f59e0b'; // Lighter orange for glow
+        ctx.shadowBlur = 5;
+        ctx.strokeStyle = '#d97706'; // Original warm orange
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(animate.previousPosition.x, animate.previousPosition.y);
         ctx.lineTo(currentX, currentY);
         ctx.stroke();
+        // Reset shadow to avoid affecting other drawings
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
         animate.previousPosition = {x: currentX, y: currentY};
         animationFrameId = requestAnimationFrame(animate);
     }
