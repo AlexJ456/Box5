@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const app = document.getElementById('app');
+    const app = document.getElementById('app-content');
+    const canvas = document.getElementById('box-canvas');
+    const container = document.querySelector('.container');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     
     // App state
     const state = {
@@ -58,6 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Interval reference
     let interval;
+    let animationFrameId;
+    let lastStateUpdate;
 
     // Event handlers
     function togglePlay() {
@@ -68,11 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
             state.count = 0;
             state.sessionComplete = false;
             state.timeLimitReached = false;
-            // Play tone at the beginning of the first phase
             playTone();
             startInterval();
+            animate();
         } else {
             clearInterval(interval);
+            cancelAnimationFrame(animationFrameId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
         render();
     }
@@ -86,6 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
         state.timeLimit = '';
         state.timeLimitReached = false;
         clearInterval(interval);
+        cancelAnimationFrame(animationFrameId);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         render();
     }
 
@@ -95,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleTimeLimitChange(e) {
-        // Update state but don't re-render
         state.timeLimit = e.target.value.replace(/[^0-9]/g, '');
     }
 
@@ -107,47 +118,75 @@ document.addEventListener('DOMContentLoaded', () => {
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimitReached = false;
-        // Play tone at the beginning of the first phase
         playTone();
         startInterval();
+        animate();
         render();
     }
 
     function startInterval() {
         clearInterval(interval);
+        lastStateUpdate = performance.now();
         interval = setInterval(() => {
-            // Increment total time
             state.totalTime += 1;
-            
-            // Check if time limit has been reached
             if (state.timeLimit && !state.timeLimitReached) {
                 const timeLimitSeconds = parseInt(state.timeLimit) * 60;
                 if (state.totalTime >= timeLimitSeconds) {
                     state.timeLimitReached = true;
                 }
             }
-            
-            // Handle countdown and phase changes
             if (state.countdown === 1) {
-                // We're about to change phases
                 state.count = (state.count + 1) % 4;
                 state.countdown = 4;
-                
-                // Play tone at the beginning of each new phase
                 playTone();
-                
-                // If we just completed an exhale (moving from count 2 to count 3) and time limit is reached
                 if (state.count === 3 && state.timeLimitReached) {
                     state.sessionComplete = true;
                     state.isPlaying = false;
                     clearInterval(interval);
+                    cancelAnimationFrame(animationFrameId);
                 }
             } else {
                 state.countdown -= 1;
             }
-            
+            lastStateUpdate = performance.now();
             render();
         }, 1000);
+    }
+
+    function animate() {
+        if (!state.isPlaying) return;
+        const ctx = canvas.getContext('2d');
+        const elapsed = (performance.now() - lastStateUpdate) / 1000;
+        const effectiveCountdown = state.countdown - elapsed;
+        let progress = (4 - effectiveCountdown) / 4;
+        progress = Math.max(0, Math.min(1, progress));
+        const phase = state.count;
+        const size = Math.min(canvas.width, canvas.height) * 0.8;
+        const left = (canvas.width - size) / 2;
+        const top = (canvas.height - size) / 2;
+        const points = [
+            {x: left, y: top + size},       // Bottom-left (start)
+            {x: left, y: top},             // Top-left
+            {x: left + size, y: top},      // Top-right
+            {x: left + size, y: top + size} // Bottom-right
+        ];
+        const startPoint = points[phase];
+        const endPoint = points[(phase + 1) % 4];
+        const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
+        const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (!animate.previousPosition) {
+            animate.previousPosition = {x: currentX, y: currentY};
+        }
+        ctx.strokeStyle = '#d97706'; // Warm orange matching buttons
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(animate.previousPosition.x, animate.previousPosition.y);
+        ctx.lineTo(currentX, currentY);
+        ctx.stroke();
+        animate.previousPosition = {x: currentX, y: currentY};
+        animationFrameId = requestAnimationFrame(animate);
     }
 
     // Render function
@@ -245,50 +284,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!state.isPlaying && !state.sessionComplete) {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
-            
-            // Add input event listener without triggering re-render
             const timeLimitInput = document.getElementById('time-limit');
             timeLimitInput.addEventListener('input', handleTimeLimitChange);
-            
-            // Focus and selection handling to prevent keyboard dismissal on iOS
             timeLimitInput.addEventListener('focus', function() {
-                // Prevent iOS from dismissing keyboard
                 this.setAttribute('readonly', 'readonly');
-                // Remove readonly to allow editing
                 setTimeout(() => {
                     this.removeAttribute('readonly');
                 }, 0);
             });
-            
-            // Add event listeners for shortcut buttons
             document.getElementById('preset-2min').addEventListener('click', () => startWithPreset(2));
             document.getElementById('preset-5min').addEventListener('click', () => startWithPreset(5));
             document.getElementById('preset-10min').addEventListener('click', () => startWithPreset(10));
         }
     }
-
-    // Check if app is running in standalone mode (installed)
-    function isRunningStandalone() {
-        return (window.matchMedia('(display-mode: standalone)').matches) || 
-               (window.navigator.standalone) || 
-               document.referrer.includes('android-app://');
-    }
-
-    // Add offline capability check
-    function updateOfflineStatus() {
-        const offlineNotification = document.getElementById('offline-notification');
-        if (!navigator.onLine && offlineNotification) {
-            offlineNotification.style.display = 'block';
-            setTimeout(() => {
-                offlineNotification.style.display = 'none';
-            }, 3000);
-        }
-    }
-
-    // Check offline status on load
-    window.addEventListener('load', updateOfflineStatus);
-    window.addEventListener('online', updateOfflineStatus);
-    window.addEventListener('offline', updateOfflineStatus);
 
     // Initial render
     render();
