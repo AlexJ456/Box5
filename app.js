@@ -158,9 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let progress = (4 - effectiveCountdown) / 4;
         progress = Math.max(0, Math.min(1, progress));
         const phase = state.count;
-        const size = Math.min(canvas.width, canvas.height) * 0.7; // Reduced size to create more space
+        const size = Math.min(canvas.width, canvas.height) * 0.6; // Adjusted size
         const left = (canvas.width - size) / 2;
-        const top = (canvas.height - size) / 2 + 50; // Moved lower to avoid title
+        const top = (canvas.height - size) / 2 + 120; // Adjusted top position
         const points = [
             {x: left, y: top + size},       // Bottom-left
             {x: left, y: top},             // Top-left
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add glow effect to trace
         ctx.shadowColor = '#f59e0b'; // Lighter orange glow
         ctx.shadowBlur = 8;
-        ctx.strokeStyle = '#d97706'; // Original warm orange (unchanged)
+        ctx.strokeStyle = '#d97706'; // Original warm orange
         ctx.lineWidth = 6; // Thicker trace
         ctx.beginPath();
         ctx.moveTo(animate.previousPosition.x, animate.previousPosition.y);
