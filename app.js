@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endPoint = points[(phase + 1) % 4];
         const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
         const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.001)'; // Slower fade
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         if (!animate.previousPosition) {
             animate.previousPosition = {x: currentX, y: currentY};
