@@ -71,8 +71,8 @@ self.addEventListener('fetch', event => {
             return response;
           })
           .catch(() => {
-            // If fetch fails, return a fallback response for HTML pages
-            if (event.request.url.indexOf('.html') > -1) {
+            // If fetch fails, return a fallback response for navigation requests
+            if (event.request.mode === 'navigate') {
               return caches.match('./index.html');
             }
           });
