@@ -3,19 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Box Breathing</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: black;
-            color: #ffedd5; /* amber-100 */
+            color: #ffedd5;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            overflow: hidden; /* Added to remove scroll */
         }
 
         .container {
@@ -52,39 +56,39 @@
             font-size: 2.5rem;
             font-weight: bold;
             margin-bottom: 4rem;
-            color: #fcd34d; /* amber-300 */
+            color: #fcd34d;
         }
 
         .instruction {
             font-size: 2rem;
             margin-bottom: 2rem;
-            color: #fdba74; /* orange-300 */
+            color: #fdba74;
         }
 
         .countdown {
             font-size: 4rem;
             font-weight: bold;
             margin-bottom: 2.5rem;
-            color: #ff6b6b; /* Warmer tone */
+            color: #ff6b6b;
         }
 
         .prompt {
             font-size: 1.5rem;
             margin-bottom: 2rem;
-            color: #fde68a; /* amber-200 */
+            color: #fde68a;
         }
 
         .complete {
             font-size: 2rem;
             margin-bottom: 2rem;
-            color: #4ade80; /* green-400 */
+            color: #4ade80;
         }
 
         .timer {
             position: fixed;
             top: 1rem;
             right: 1rem;
-            color: #fde68a; /* amber-200 */
+            color: #fde68a;
             z-index: 2;
         }
 
@@ -104,16 +108,16 @@
         }
 
         input[type="text"] {
-            background-color: #78350f; /* amber-900 */
-            color: #ffedd5; /* amber-100 */
-            border: 1px solid #d97706; /* amber-600 */
+            background-color: #78350f;
+            color: #ffedd5;
+            border: 1px solid #d97706;
             padding: 0.5rem;
             border-radius: 0.25rem;
             font-size: 16px;
         }
 
         label {
-            color: #fde68a; /* amber-200 */
+            color: #fde68a;
             display: flex;
             align-items: center;
         }
@@ -157,7 +161,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #374151; /* gray-700 */
+            background-color: #374151;
             transition: .4s;
             border-radius: 24px;
         }
@@ -175,7 +179,7 @@
         }
 
         input:checked + .slider {
-            background-color: #d97706; /* amber-600 */
+            background-color: #d97706;
         }
 
         input:checked + .slider:before {
@@ -205,12 +209,12 @@
         .preset-button {
             font-size: 1rem;
             padding: 0.5rem 1rem;
-            background-color: #92400e; /* amber-800 */
-            color: #ffedd5; /* amber-100 */
+            background-color: #92400e;
+            color: #ffedd5;
         }
 
         .preset-button:hover {
-            background-color: #78350f; /* amber-900 */
+            background-color: #78350f;
         }
     </style>
 </head>
@@ -220,5 +224,19 @@
         <div id="app-content"></div>
     </div>
     <script src="app.js"></script>
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
