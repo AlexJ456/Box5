@@ -37,7 +37,7 @@
             box-sizing: border-box;
         }
 
-        /* New canvas styles */
+        /* Canvas styles */
         #box-canvas {
             position: absolute;
             top: 0;
@@ -47,13 +47,17 @@
             z-index: 0;
         }
 
+        /* App content styles */
         #app-content {
             position: relative;
             z-index: 1;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
 
-        /* Existing styles remain unchanged */
+        /* Typography */
         h1 {
             font-size: 2.25rem;
             font-weight: bold;
