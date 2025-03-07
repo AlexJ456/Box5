@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
     
-    // App state
     const state = {
         isPlaying: false,
         count: 0,
@@ -17,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
         timeLimitReached: false
     };
 
-    // SVG Icons
     const icons = {
         play: `<svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
         pause: `<svg class="icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`,
@@ -27,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clock: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
     };
 
-    // Helper functions
     function getInstruction(count) {
         switch (count) {
             case 0: return 'Inhale';
@@ -50,22 +47,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // 440 Hz is A4
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
                 oscillator.connect(audioContext.destination);
                 oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.1); // Play for 0.1 seconds
+                oscillator.stop(audioContext.currentTime + 0.1);
             } catch (e) {
                 console.error('Error playing tone:', e);
             }
         }
     }
 
-    // Interval reference
     let interval;
     let animationFrameId;
     let lastStateUpdate;
 
-    // Event handlers
     function togglePlay() {
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
@@ -82,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelAnimationFrame(animationFrameId);
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            animate.previousPosition = null; // Reset to prevent residual lines
         }
         render();
     }
@@ -98,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelAnimationFrame(animationFrameId);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        animate.previousPosition = null; // Reset to prevent residual lines
         render();
     }
 
@@ -165,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const left = (canvas.width - size) / 2;
         const top = (canvas.height - size) / 2;
         const points = [
-            {x: left, y: top + size},       // Bottom-left (start)
+            {x: left, y: top + size},       // Bottom-left
             {x: left, y: top},             // Top-left
             {x: left + size, y: top},      // Top-right
             {x: left + size, y: top + size} // Bottom-right
@@ -174,12 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const endPoint = points[(phase + 1) % 4];
         const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
         const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.001)'; // Slower fade
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.01)'; // Increased for more apparent fade
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         if (!animate.previousPosition) {
             animate.previousPosition = {x: currentX, y: currentY};
         }
-        ctx.strokeStyle = '#d97706'; // Warm orange matching buttons
+        ctx.strokeStyle = '#d97706';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(animate.previousPosition.x, animate.previousPosition.y);
@@ -189,12 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
         animationFrameId = requestAnimationFrame(animate);
     }
 
-    // Render function
     function render() {
         let html = `
             <h1>Box Breathing</h1>
         `;
-
         if (state.isPlaying) {
             html += `
                 <div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
@@ -202,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="countdown">${state.countdown}</div>
             `;
         }
-
         if (!state.isPlaying && !state.sessionComplete) {
             html += `
                 <div class="settings">
@@ -231,11 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="prompt">Press start to begin</div>
             `;
         }
-
         if (state.sessionComplete) {
             html += `<div class="complete">Complete!</div>`;
         }
-
         if (!state.sessionComplete) {
             html += `
                 <button id="toggle-play">
@@ -244,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
             `;
         }
-
         if (state.sessionComplete) {
             html += `
                 <button id="reset">
@@ -253,8 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
             `;
         }
-
-        // Add shortcut buttons for preset times
         if (!state.isPlaying && !state.sessionComplete) {
             html += `
                 <div class="shortcut-buttons">
@@ -270,27 +259,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
-
         app.innerHTML = html;
 
-        // Add event listeners after DOM update
         if (!state.sessionComplete) {
             document.getElementById('toggle-play').addEventListener('click', togglePlay);
         }
-        
         if (state.sessionComplete) {
             document.getElementById('reset').addEventListener('click', resetToStart);
         }
-        
         if (!state.isPlaying && !state.sessionComplete) {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
             const timeLimitInput = document.getElementById('time-limit');
             timeLimitInput.addEventListener('input', handleTimeLimitChange);
             timeLimitInput.addEventListener('focus', function() {
                 this.setAttribute('readonly', 'readonly');
-                setTimeout(() => {
-                    this.removeAttribute('readonly');
-                }, 0);
+                setTimeout(() => this.removeAttribute('readonly'), 0);
             });
             document.getElementById('preset-2min').addEventListener('click', () => startWithPreset(2));
             document.getElementById('preset-5min').addEventListener('click', () => startWithPreset(5));
@@ -298,6 +281,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initial render
     render();
 });
