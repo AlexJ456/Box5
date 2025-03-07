@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Box Breathing</title>
+    <!-- Fix iOS status bar to black background with white icons -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        /* Base styles */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: black;
@@ -31,7 +32,6 @@
             box-sizing: border-box;
         }
 
-        /* Canvas styles */
         #box-canvas {
             position: absolute;
             top: 0;
@@ -41,7 +41,6 @@
             z-index: 0;
         }
 
-        /* App content styles */
         #app-content {
             position: relative;
             z-index: 1;
@@ -51,25 +50,24 @@
             width: 100%;
         }
 
-        /* Typography */
         h1 {
-            font-size: 2.25rem;
+            font-size: 2.5rem;
             font-weight: bold;
-            margin-bottom: 2rem;
+            margin-bottom: 3.5rem; /* Increased spacing */
             color: #fcd34d; /* amber-300 */
         }
 
         .instruction {
-            font-size: 1.875rem;
-            margin-bottom: 1rem;
+            font-size: 2rem;
+            margin-bottom: 2rem; /* Increased spacing */
             color: #fdba74; /* orange-300 */
         }
 
         .countdown {
-            font-size: 3.75rem;
+            font-size: 4rem;
             font-weight: bold;
-            margin-bottom: 2rem;
-            color: #f87171; /* red-400 */
+            margin-bottom: 2.5rem;
+            color: #ff6b6b; /* Warmer tone */
         }
 
         .prompt {
@@ -79,20 +77,19 @@
         }
 
         .complete {
-            font-size: 1.875rem;
+            font-size: 2rem;
             margin-bottom: 2rem;
             color: #4ade80; /* green-400 */
         }
 
         .timer {
-            position: fixed; /* Changed to fixed for viewport positioning */
+            position: fixed;
             top: 1rem;
             right: 1rem;
             color: #fde68a; /* amber-200 */
-            z-index: 2; /* Ensures it’s above other elements */
+            z-index: 2;
         }
 
-        /* Form elements */
         .form-group {
             display: flex;
             align-items: center;
@@ -123,11 +120,10 @@
             align-items: center;
         }
 
-        /* Button styles */
         button {
             font-size: 1.25rem;
             padding: 0.75rem 1.5rem;
-            background-color: #d97706; /* amber-600 */
+            background: linear-gradient(to bottom, #d97706, #b45309); /* Subtle gradient */
             color: black;
             border: none;
             border-radius: 0.25rem;
@@ -136,13 +132,13 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4); /* Enhanced shadow */
         }
 
         button:hover {
-            background-color: #b45309; /* amber-700 */
+            background: linear-gradient(to bottom, #b45309, #92400e);
         }
 
-        /* Switch styles */
         .switch {
             position: relative;
             display: inline-block;
@@ -188,7 +184,6 @@
             transform: translateX(24px);
         }
 
-        /* Icon styles */
         .icon {
             display: inline-block;
             vertical-align: middle;
@@ -201,7 +196,6 @@
             stroke-linejoin: round;
         }
 
-        /* Shortcut buttons styles */
         .shortcut-buttons {
             display: flex;
             gap: 0.5rem;
