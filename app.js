@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelAnimationFrame(animationFrameId);
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Removed: animate.previousPosition = null;
         }
         render();
     }
@@ -94,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelAnimationFrame(animationFrameId);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Removed: animate.previousPosition = null;
         render();
     }
 
@@ -172,28 +170,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
         const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
 
-        // Clear with fade
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.01)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Clear the canvas each frame
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw static orange square
-        ctx.shadowColor = '#d97706';
-        ctx.shadowBlur = 5;
+        // Draw the static orange square
         ctx.strokeStyle = '#d97706';
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 2;
         ctx.strokeRect(left, top, size, size);
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
 
-        // Draw bright red dot on top
+        // Draw the bright red dot
         ctx.beginPath();
-        ctx.arc(currentX, currentY, 10, 0, 2 * Math.PI);
+        ctx.arc(currentX, currentY, 5, 0, 2 * Math.PI);
         ctx.fillStyle = '#ff0000';
-        ctx.shadowColor = '#ff0000';
-        ctx.shadowBlur = 8;
         ctx.fill();
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
 
         animationFrameId = requestAnimationFrame(animate);
     }
