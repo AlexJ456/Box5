@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelAnimationFrame(animationFrameId);
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            animate.previousPosition = null;
+            // Removed: animate.previousPosition = null;
         }
         render();
     }
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelAnimationFrame(animationFrameId);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        animate.previousPosition = null;
+        // Removed: animate.previousPosition = null;
         render();
     }
 
@@ -158,9 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let progress = (4 - effectiveCountdown) / 4;
         progress = Math.max(0, Math.min(1, progress));
         const phase = state.count;
-        const size = Math.min(canvas.width, canvas.height) * 0.6; // Adjusted size
+        const size = Math.min(canvas.width, canvas.height) * 0.6;
         const left = (canvas.width - size) / 2;
-        const top = (canvas.height - size) / 2 + 120; // Adjusted top position
+        const top = (canvas.height - size) / 2 + 120;
         const points = [
             {x: left, y: top + size},       // Bottom-left
             {x: left, y: top},             // Top-left
@@ -171,25 +171,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const endPoint = points[(phase + 1) % 4];
         const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
         const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.01)'; // Fade effect
+
+        // Clear with fade
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.01)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (!animate.previousPosition) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear on start
-            animate.previousPosition = {x: currentX, y: currentY};
-        }
-        // Add glow effect to trace
-        ctx.shadowColor = '#f59e0b'; // Lighter orange glow
-        ctx.shadowBlur = 8;
-        ctx.strokeStyle = '#d97706'; // Original warm orange
-        ctx.lineWidth = 6; // Thicker trace
-        ctx.beginPath();
-        ctx.moveTo(animate.previousPosition.x, animate.previousPosition.y);
-        ctx.lineTo(currentX, currentY);
-        ctx.stroke();
-        // Reset shadow
+
+        // Draw static orange square
+        ctx.shadowColor = '#d97706';
+        ctx.shadowBlur = 5;
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(left, top, size, size);
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
-        animate.previousPosition = {x: currentX, y: currentY};
+
+        // Draw bright red dot on top
+        ctx.beginPath();
+        ctx.arc(currentX, currentY, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+
         animationFrameId = requestAnimationFrame(animate);
     }
 
