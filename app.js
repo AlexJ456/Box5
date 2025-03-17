@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timeLimit: '',
         sessionComplete: false,
         timeLimitReached: false,
-        phaseTime: 4 // Default phase time
+        phaseTime: 4 // Added phaseTime with default 4 seconds
     };
 
     const icons = {
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
             state.totalTime = 0;
-            state.countdown = state.phaseTime;
+            state.countdown = state.phaseTime; // Use phaseTime instead of hardcoded 4
             state.count = 0;
             state.sessionComplete = false;
             state.timeLimitReached = false;
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetToStart() {
         state.isPlaying = false;
         state.totalTime = 0;
-        state.countdown = state.phaseTime;
+        state.countdown = state.phaseTime; // Use phaseTime
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimit = '';
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
         state.totalTime = 0;
-        state.countdown = state.phaseTime;
+        state.countdown = state.phaseTime; // Use phaseTime
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimitReached = false;
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (state.countdown === 1) {
                 state.count = (state.count + 1) % 4;
-                state.countdown = state.phaseTime;
+                state.countdown = state.phaseTime; // Reset to phaseTime
                 playTone();
                 if (state.count === 3 && state.timeLimitReached) {
                     state.sessionComplete = true;
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctx = canvas.getContext('2d');
         const elapsed = (performance.now() - lastStateUpdate) / 1000;
         const effectiveCountdown = state.countdown - elapsed;
-        let progress = (state.phaseTime - effectiveCountdown) / state.phaseTime;
+        let progress = (state.phaseTime - effectiveCountdown) / state.phaseTime; // Use phaseTime
         progress = Math.max(0, Math.min(1, progress));
         const phase = state.count;
         const size = Math.min(canvas.width, canvas.height) * 0.6;
@@ -171,10 +171,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
         const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
 
+        // Clear the canvas each frame
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the static orange square
         ctx.strokeStyle = '#d97706';
         ctx.lineWidth = 2;
         ctx.strokeRect(left, top, size, size);
+
+        // Draw the bright red dot
         ctx.beginPath();
         ctx.arc(currentX, currentY, 5, 0, 2 * Math.PI);
         ctx.fillStyle = '#ff0000';
@@ -184,52 +189,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function render() {
-        let html = `<h1>Box Breathing</h1>`;
+        let html = `
+            <h1>Box Breathing</h1>
+        `;
         if (state.isPlaying) {
-            html += `<div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
-                     <div class="instruction">${getInstruction(state.count)}</div>
-                     <div class="countdown">${state.countdown}</div>`;
+            html += `
+                <div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
+                <div class="instruction">${getInstruction(state.count)}</div>
+                <div class="countdown">${state.countdown}</div>
+            `;
         }
         if (!state.isPlaying && !state.sessionComplete) {
-            html += `<div class="settings">
-                        <div class="form-group">
-                            <label class="switch">
-                                <input type="checkbox" id="sound-toggle" ${state.soundEnabled ? 'checked' : ''}>
-                                <span class="slider"></span>
-                            </label>
-                            <label for="sound-toggle">
-                                ${state.soundEnabled ? icons.volume2 : icons.volumeX}
-                                Sound ${state.soundEnabled ? 'On' : 'Off'}
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Time limit (minutes)" value="${state.timeLimit}" id="time-limit">
-                            <label for="time-limit">Minutes (optional)</label>
-                        </div>
+            html += `
+                <div class="settings">
+                    <div class="form-group">
+                        <label class="switch">
+                            <input type="checkbox" id="sound-toggle" ${state.soundEnabled ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                        <label for="sound-toggle">
+                            ${state.soundEnabled ? icons.volume2 : icons.volumeX}
+                            Sound ${state.soundEnabled ? 'On' : 'Off'}
+                        </label>
                     </div>
-                    <div class="prompt">Press start to begin</div>`;
+                    <div class="form-group">
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            placeholder="Time limit (minutes)"
+                            value="${state.timeLimit}"
+                            id="time-limit"
+                        >
+                        <label for="time-limit">Minutes (optional)</label>
+                    </div>
+                </div>
+                <div class="prompt">Press start to begin</div>
+            `;
         }
         if (state.sessionComplete) {
             html += `<div class="complete">Complete!</div>`;
         }
         if (!state.sessionComplete) {
-            html += `<button id="toggle-play">${state.isPlaying ? icons.pause : icons.play} ${state.isPlaying ? 'Pause' : 'Start'}</button>`;
+            html += `
+                <button id="toggle-play">
+                    ${state.isPlaying ? icons.pause : icons.play}
+                    ${state.isPlaying ? 'Pause' : 'Start'}
+                </button>
+            `;
         }
+        // Add slider below the Start button on homepage
         if (!state.isPlaying && !state.sessionComplete) {
-            html += `<div class="slider-container">
-                        <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
-                        <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
-                    </div>`;
+            html += `
+                <div class="slider-container">
+                    <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
+                    <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
+                </div>
+            `;
         }
         if (state.sessionComplete) {
-            html += `<button id="reset">${icons.rotateCcw} Back to Start</button>`;
+            html += `
+                <button id="reset">
+                    ${icons.rotateCcw}
+                    Back to Start
+                </button>
+            `;
         }
         if (!state.isPlaying && !state.sessionComplete) {
-            html += `<div class="shortcut-buttons">
-                        <button id="preset-2min" class="preset-button">${icons.clock} 2 min</button>
-                        <button id="preset-5min" class="preset-button">${icons.clock} 5 min</button>
-                        <button id="preset-10min" class="preset-button">${icons.clock} 10 min</button>
-                    </div>`;
+            html += `
+                <div class="shortcut-buttons">
+                    <button id="preset-2min" class="preset-button">
+                        ${icons.clock} 2 min
+                    </button>
+                    <button id="preset-5min" class="preset-button">
+                        ${icons.clock} 5 min
+                    </button>
+                    <button id="preset-10min" class="preset-button">
+                        ${icons.clock} 10 min
+                    </button>
+                </div>
+            `;
         }
         app.innerHTML = html;
 
@@ -247,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.setAttribute('readonly', 'readonly');
                 setTimeout(() => this.removeAttribute('readonly'), 0);
             });
+            // Add event listener for the slider
             const phaseTimeSlider = document.getElementById('phase-time-slider');
             phaseTimeSlider.addEventListener('input', function() {
                 state.phaseTime = parseInt(this.value);
