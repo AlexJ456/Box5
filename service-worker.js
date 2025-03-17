@@ -1,10 +1,10 @@
-const CACHE_NAME = 'box-breathing-cache-v2'; // Versioned cache name
+const CACHE_NAME = 'box-breathing-cache-v2';
 const urlsToCache = [
   './',
   './index.html',
-  './app.js',           // Replace with your app’s JS file
-  './manifest.json',    // Replace with your manifest file
-  './icons/icon-192x192.png', // Adjust icon paths as needed
+  './app.js',
+  './manifest.json',
+  './icons/icon-192x192.png',
   './icons/icon-512x512.png'
 ];
 
@@ -20,7 +20,6 @@ self.addEventListener('install', event => {
         console.error('Cache addAll failed:', error);
       })
   );
-  // Activate immediately
   self.skipWaiting();
 });
 
@@ -38,7 +37,6 @@ self.addEventListener('activate', event => {
         })
       );
     }).then(() => {
-      // Take control of clients immediately
       return self.clients.claim();
     })
   );
@@ -53,30 +51,22 @@ self.addEventListener('fetch', event => {
           console.log('Serving from cache:', event.request.url);
           return response;
         }
-
-        // Clone the request for fetching
         const fetchRequest = event.request.clone();
-
         return fetch(fetchRequest)
           .then(response => {
-            // Validate response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-
-            // Clone and cache the response
             const responseToCache = response.clone();
             caches.open(CACHE_NAME)
               .then(cache => {
                 console.log('Caching new resource:', event.request.url);
                 cache.put(event.request, responseToCache);
               });
-
             return response;
           })
           .catch(() => {
             console.log('Fetch failed, serving fallback:', event.request.url);
-            // Fallback to index.html for navigation requests
             if (event.request.mode === 'navigate') {
               return caches.match('./index.html');
             }
