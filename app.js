@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
         soundEnabled: false,
         timeLimit: '',
         sessionComplete: false,
-        timeLimitReached: false
+        timeLimitReached: false,
+        phaseTime: 4 // Added phaseTime with default 4 seconds
     };
 
     const icons = {
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
             state.totalTime = 0;
-            state.countdown = 4;
+            state.countdown = state.phaseTime; // Use phaseTime instead of hardcoded 4
             state.count = 0;
             state.sessionComplete = false;
             state.timeLimitReached = false;
@@ -84,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetToStart() {
         state.isPlaying = false;
         state.totalTime = 0;
-        state.countdown = 4;
+        state.countdown = state.phaseTime; // Use phaseTime
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimit = '';
@@ -109,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
         state.totalTime = 0;
-        state.countdown = 4;
+        state.countdown = state.phaseTime; // Use phaseTime
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimitReached = false;
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (state.countdown === 1) {
                 state.count = (state.count + 1) % 4;
-                state.countdown = 4;
+                state.countdown = state.phaseTime; // Reset to phaseTime
                 playTone();
                 if (state.count === 3 && state.timeLimitReached) {
                     state.sessionComplete = true;
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctx = canvas.getContext('2d');
         const elapsed = (performance.now() - lastStateUpdate) / 1000;
         const effectiveCountdown = state.countdown - elapsed;
-        let progress = (4 - effectiveCountdown) / 4;
+        let progress = (state.phaseTime - effectiveCountdown) / state.phaseTime; // Use phaseTime
         progress = Math.max(0, Math.min(1, progress));
         const phase = state.count;
         const size = Math.min(canvas.width, canvas.height) * 0.6;
@@ -237,6 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
             `;
         }
+        // Add slider below the Start button on homepage
+        if (!state.isPlaying && !state.sessionComplete) {
+            html += `
+                <div class="slider-container">
+                    <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
+                    <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
+                </div>
+            `;
+        }
         if (state.sessionComplete) {
             html += `
                 <button id="reset">
@@ -275,6 +285,12 @@ document.addEventListener('DOMContentLoaded', () => {
             timeLimitInput.addEventListener('focus', function() {
                 this.setAttribute('readonly', 'readonly');
                 setTimeout(() => this.removeAttribute('readonly'), 0);
+            });
+            // Add event listener for the slider
+            const phaseTimeSlider = document.getElementById('phase-time-slider');
+            phaseTimeSlider.addEventListener('input', function() {
+                state.phaseTime = parseInt(this.value);
+                document.getElementById('phase-time-value').textContent = state.phaseTime;
             });
             document.getElementById('preset-2min').addEventListener('click', () => startWithPreset(2));
             document.getElementById('preset-5min').addEventListener('click', () => startWithPreset(5));
