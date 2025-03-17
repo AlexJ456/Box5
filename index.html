@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Box Breathing</title>
     <link rel="manifest" href="manifest.json">
     <style>
@@ -229,7 +231,7 @@
             background-color: #78350f;
         }
 
-        /* Slider styles */
+        /* Added styles for the phase time slider */
         .slider-container {
             display: flex;
             flex-direction: column;
@@ -275,6 +277,7 @@
     </style>
 </head>
 <body>
+    <!-- Offline notification div -->
     <div id="offline-notification" style="display: none;">You are offline, but the app will work normally</div>
     
     <div class="container">
@@ -285,6 +288,7 @@
     <script src="app.js"></script>
 
     <script>
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js')
