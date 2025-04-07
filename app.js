@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
         phaseTime: 4 // Added phaseTime with default 4 seconds
     };
 
+    let wakeLock = null; // Added to store the wake lock sentinel
+
     const icons = {
         play: `<svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
         pause: `<svg class="icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`,
@@ -62,22 +64,52 @@ document.addEventListener('DOMContentLoaded', () => {
     let animationFrameId;
     let lastStateUpdate;
 
+    // Function to request a screen wake lock
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake lock is active');
+            } catch (err) {
+                console.error('Failed to acquire wake lock:', err);
+            }
+        } else {
+            console.log('Wake Lock API not supported');
+        }
+    }
+
+    // Function to release the wake lock
+    function releaseWakeLock() {
+        if (wakeLock !== null) {
+            wakeLock.release()
+                .then(() => {
+                    wakeLock = null;
+                    console.log('Wake lock released');
+                })
+                .catch(err => {
+                    console.error('Failed to release wake lock:', err);
+                });
+        }
+    }
+
     function togglePlay() {
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
             state.totalTime = 0;
-            state.countdown = state.phaseTime; // Use phaseTime instead of hardcoded 4
+            state.countdown = state.phaseTime;
             state.count = 0;
             state.sessionComplete = false;
             state.timeLimitReached = false;
             playTone();
             startInterval();
             animate();
+            requestWakeLock(); // Request wake lock when starting
         } else {
             clearInterval(interval);
             cancelAnimationFrame(animationFrameId);
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            releaseWakeLock(); // Release wake lock when pausing
         }
         render();
     }
@@ -85,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetToStart() {
         state.isPlaying = false;
         state.totalTime = 0;
-        state.countdown = state.phaseTime; // Use phaseTime
+        state.countdown = state.phaseTime;
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimit = '';
@@ -94,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelAnimationFrame(animationFrameId);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        releaseWakeLock(); // Release wake lock when resetting
         render();
     }
 
@@ -110,13 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
         state.totalTime = 0;
-        state.countdown = state.phaseTime; // Use phaseTime
+        state.countdown = state.phaseTime;
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimitReached = false;
         playTone();
         startInterval();
         animate();
+        requestWakeLock(); // Request wake lock when starting with preset
         render();
     }
 
@@ -133,13 +167,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (state.countdown === 1) {
                 state.count = (state.count + 1) % 4;
-                state.countdown = state.phaseTime; // Reset to phaseTime
+                state.countdown = state.phaseTime;
                 playTone();
                 if (state.count === 3 && state.timeLimitReached) {
                     state.sessionComplete = true;
                     state.isPlaying = false;
                     clearInterval(interval);
                     cancelAnimationFrame(animationFrameId);
+                    releaseWakeLock(); // Release wake lock when session completes
                 }
             } else {
                 state.countdown -= 1;
@@ -154,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctx = canvas.getContext('2d');
         const elapsed = (performance.now() - lastStateUpdate) / 1000;
         const effectiveCountdown = state.countdown - elapsed;
-        let progress = (state.phaseTime - effectiveCountdown) / state.phaseTime; // Use phaseTime
+        let progress = (state.phaseTime - effectiveCountdown) / state.phaseTime;
         progress = Math.max(0, Math.min(1, progress));
         const phase = state.count;
         const size = Math.min(canvas.width, canvas.height) * 0.6;
@@ -214,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="form-group">
                         <input
-                            type="text"
+                            type="number"  <!-- Changed from "text" to "number" -->
                             inputmode="numeric"
                             pattern="[0-9]*"
                             placeholder="Time limit (minutes)"
@@ -282,7 +317,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
             const timeLimitInput = document.getElementById('time-limit');
             timeLimitInput.addEventListener('input', handleTimeLimitChange);
-            // Removed the focus event listener
+            timeLimitInput.addEventListener('focus', function() {
+                this.setAttribute('readonly', 'readonly');
+                setTimeout(() => this.removeAttribute('readonly'), 0);
+            });
             // Add event listener for the slider
             const phaseTimeSlider = document.getElementById('phase-time-slider');
             phaseTimeSlider.addEventListener('input', function() {
