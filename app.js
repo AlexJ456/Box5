@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="form-group">
                         <input
-                            type="number"  <!-- Changed from "text" to "number" -->
+                            type="text"
                             inputmode="numeric"
                             pattern="[0-9]*"
                             placeholder="Time limit (minutes)"
