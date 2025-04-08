@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Box Breathing</title>
@@ -19,7 +19,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow: hidden; /* Already preventing scroll */
+            overflow: hidden;
         }
 
         /* Offline notification styles */
@@ -121,19 +121,14 @@
             gap: 1rem;
         }
 
-        /* Style for the time limit input */
-        input[type="tel"] { /* Updated selector */
+        input[type="text"] {
             background-color: #78350f;
             color: #ffedd5;
             border: 1px solid #d97706;
             padding: 0.5rem;
             border-radius: 0.25rem;
             font-size: 16px;
-            /* Remove text-align if you want default left alignment */
-            /* text-align: center; */
-            width: 100px; /* Adjust width as needed */
         }
-
 
         label {
             color: #fde68a;
@@ -282,8 +277,9 @@
     </style>
 </head>
 <body>
+    <!-- Offline notification div -->
     <div id="offline-notification" style="display: none;">You are offline, but the app will work normally</div>
-
+    
     <div class="container">
         <canvas id="box-canvas"></canvas>
         <div id="app-content"></div>
