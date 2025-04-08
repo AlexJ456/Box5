@@ -4,14 +4,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.container');
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
-    
+
     const state = {
         isPlaying: false,
         count: 0,
         countdown: 4,
         totalTime: 0,
         soundEnabled: false,
-        timeLimit: '',
+        timeLimit: '', // Keep as string to handle empty input easily
         sessionComplete: false,
         timeLimitReached: false,
         phaseTime: 4 // Added phaseTime with default 4 seconds
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
             state.totalTime = 0;
-            state.countdown = state.phaseTime;
+            state.countdown = state.phaseTime; // Use current phase time
             state.count = 0;
             state.sessionComplete = false;
             state.timeLimitReached = false;
@@ -117,10 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetToStart() {
         state.isPlaying = false;
         state.totalTime = 0;
-        state.countdown = state.phaseTime;
+        state.countdown = state.phaseTime; // Reset countdown based on current phase time
         state.count = 0;
         state.sessionComplete = false;
-        state.timeLimit = '';
+        state.timeLimit = ''; // Reset time limit input field
         state.timeLimitReached = false;
         clearInterval(interval);
         cancelAnimationFrame(animationFrameId);
@@ -136,14 +136,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleTimeLimitChange(e) {
+        // Allow only numbers, keep the value as a string
         state.timeLimit = e.target.value.replace(/[^0-9]/g, '');
+        // Optionally re-render if you want immediate reflection, but render() is called elsewhere
+        // render(); // Uncomment if needed, but likely redundant
     }
 
-    function startWithPreset(minutes) {
+     function startWithPreset(minutes) {
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
         state.totalTime = 0;
-        state.countdown = state.phaseTime;
+        state.countdown = state.phaseTime; // Use current phase time
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimitReached = false;
@@ -154,22 +157,30 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     }
 
+
     function startInterval() {
         clearInterval(interval);
         lastStateUpdate = performance.now();
         interval = setInterval(() => {
             state.totalTime += 1;
+
+            // Check for time limit completion
             if (state.timeLimit && !state.timeLimitReached) {
                 const timeLimitSeconds = parseInt(state.timeLimit) * 60;
-                if (state.totalTime >= timeLimitSeconds) {
+                if (timeLimitSeconds > 0 && state.totalTime >= timeLimitSeconds) {
                     state.timeLimitReached = true;
                 }
             }
+
+            // Advance countdown and phase
             if (state.countdown === 1) {
                 state.count = (state.count + 1) % 4;
-                state.countdown = state.phaseTime;
+                state.countdown = state.phaseTime; // Reset countdown to current phase time
                 playTone();
-                if (state.count === 3 && state.timeLimitReached) {
+
+                 // Check if session should end (completed a cycle AND time limit reached)
+                 // End only after the 'Wait' phase (count === 3 goes to count === 0 next)
+                if (state.count === 0 && state.timeLimitReached) {
                     state.sessionComplete = true;
                     state.isPlaying = false;
                     clearInterval(interval);
@@ -179,30 +190,47 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 state.countdown -= 1;
             }
+
             lastStateUpdate = performance.now();
-            render();
+            // Render updates only if playing or session just completed
+            if (state.isPlaying || state.sessionComplete) {
+                render();
+            }
+             // If session completed in this tick, break the interval
+            if (state.sessionComplete) {
+                 clearInterval(interval);
+                 render(); // Final render for complete state
+            }
         }, 1000);
     }
 
     function animate() {
         if (!state.isPlaying) return;
+
         const ctx = canvas.getContext('2d');
         const elapsed = (performance.now() - lastStateUpdate) / 1000;
         const effectiveCountdown = state.countdown - elapsed;
+        // Use state.phaseTime for progress calculation
         let progress = (state.phaseTime - effectiveCountdown) / state.phaseTime;
-        progress = Math.max(0, Math.min(1, progress));
+        progress = Math.max(0, Math.min(1, progress)); // Clamp progress between 0 and 1
+
         const phase = state.count;
         const size = Math.min(canvas.width, canvas.height) * 0.6;
         const left = (canvas.width - size) / 2;
-        const top = (canvas.height - size) / 2 + 120;
+        const top = (canvas.height - size) / 2 + 120; // Adjusted top position for space
+
+        // Define box points clockwise starting from bottom-left (inhale starts moving up)
         const points = [
-            {x: left, y: top + size},       // Bottom-left
-            {x: left, y: top},             // Top-left
-            {x: left + size, y: top},      // Top-right
-            {x: left + size, y: top + size} // Bottom-right
+            {x: left, y: top + size},       // 0: Bottom-left (Start Inhale)
+            {x: left, y: top},             // 1: Top-left (Start Hold)
+            {x: left + size, y: top},      // 2: Top-right (Start Exhale)
+            {x: left + size, y: top + size} // 3: Bottom-right (Start Wait)
         ];
+
         const startPoint = points[phase];
-        const endPoint = points[(phase + 1) % 4];
+        const endPoint = points[(phase + 1) % 4]; // Next point in the cycle
+
+        // Calculate current position based on progress along the line segment
         const currentX = startPoint.x + progress * (endPoint.x - startPoint.x);
         const currentY = startPoint.y + progress * (endPoint.y - startPoint.y);
 
@@ -210,14 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Draw the static orange square
-        ctx.strokeStyle = '#d97706';
+        ctx.strokeStyle = '#d97706'; // Orange color
         ctx.lineWidth = 2;
         ctx.strokeRect(left, top, size, size);
 
         // Draw the bright red dot
         ctx.beginPath();
         ctx.arc(currentX, currentY, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = '#ff0000';
+        ctx.fillStyle = '#ff0000'; // Bright red color
         ctx.fill();
 
         animationFrameId = requestAnimationFrame(animate);
@@ -227,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = `
             <h1>Box Breathing</h1>
         `;
+
         if (state.isPlaying) {
             html += `
                 <div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
@@ -234,6 +263,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="countdown">${state.countdown}</div>
             `;
         }
+
+        // Show settings/prompt only when not playing AND not complete
         if (!state.isPlaying && !state.sessionComplete) {
             html += `
                 <div class="settings">
@@ -249,9 +280,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="form-group">
                         <input
-                            type="text"
-                            inputmode="numeric"
-                            pattern="[0-9]*"
+                            type="tel" // Use type="tel" for numeric keyboard
+                            inputmode="numeric" // Still good practice
+                            pattern="[0-9]*"    // Still good practice
                             placeholder="Time limit (minutes)"
                             value="${state.timeLimit}"
                             id="time-limit"
@@ -259,29 +290,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label for="time-limit">Minutes (optional)</label>
                     </div>
                 </div>
+                 <div class="slider-container">
+                    <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
+                    <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
+                </div>
                 <div class="prompt">Press start to begin</div>
             `;
         }
+
         if (state.sessionComplete) {
-            html += `<div class="complete">Complete!</div>`;
+            html += `<div class="complete">Complete! Total Time: ${formatTime(state.totalTime)}</div>`;
         }
+
+        // Show Start/Pause button only when not complete
         if (!state.sessionComplete) {
-            html += `
+             html += `
                 <button id="toggle-play">
                     ${state.isPlaying ? icons.pause : icons.play}
                     ${state.isPlaying ? 'Pause' : 'Start'}
                 </button>
             `;
         }
-        // Add slider below the Start button on homepage
-        if (!state.isPlaying && !state.sessionComplete) {
-            html += `
-                <div class="slider-container">
-                    <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
-                    <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
-                </div>
-            `;
-        }
+
+
+        // Show Reset button only when complete
         if (state.sessionComplete) {
             html += `
                 <button id="reset">
@@ -290,8 +322,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
             `;
         }
+
+        // Show presets only when not playing AND not complete
         if (!state.isPlaying && !state.sessionComplete) {
-            html += `
+             html += `
                 <div class="shortcut-buttons">
                     <button id="preset-2min" class="preset-button">
                         ${icons.clock} 2 min
@@ -305,33 +339,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
+
         app.innerHTML = html;
 
+        // Add event listeners after innerHTML is set
+
         if (!state.sessionComplete) {
-            document.getElementById('toggle-play').addEventListener('click', togglePlay);
+            // Toggle play listener only exists if the button exists
+            const togglePlayButton = document.getElementById('toggle-play');
+            if (togglePlayButton) {
+                 togglePlayButton.addEventListener('click', togglePlay);
+            }
         }
+
         if (state.sessionComplete) {
-            document.getElementById('reset').addEventListener('click', resetToStart);
+            // Reset listener only exists if the button exists
+             const resetButton = document.getElementById('reset');
+             if(resetButton) {
+                resetButton.addEventListener('click', resetToStart);
+             }
         }
+
+        // Settings listeners only exist if settings are shown
         if (!state.isPlaying && !state.sessionComplete) {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
+
             const timeLimitInput = document.getElementById('time-limit');
             timeLimitInput.addEventListener('input', handleTimeLimitChange);
-            timeLimitInput.addEventListener('focus', function() {
-                this.setAttribute('readonly', 'readonly');
-                setTimeout(() => this.removeAttribute('readonly'), 0);
-            });
-            // Add event listener for the slider
+            // REMOVED the problematic focus listener:
+            // timeLimitInput.addEventListener('focus', function() {
+            //     this.setAttribute('readonly', 'readonly');
+            //     setTimeout(() => this.removeAttribute('readonly'), 0);
+            // });
+
             const phaseTimeSlider = document.getElementById('phase-time-slider');
             phaseTimeSlider.addEventListener('input', function() {
                 state.phaseTime = parseInt(this.value);
+                // Update the displayed value next to the slider
                 document.getElementById('phase-time-value').textContent = state.phaseTime;
+                // Update countdown immediately if needed (optional)
+                 // state.countdown = state.phaseTime;
             });
+
             document.getElementById('preset-2min').addEventListener('click', () => startWithPreset(2));
             document.getElementById('preset-5min').addEventListener('click', () => startWithPreset(5));
             document.getElementById('preset-10min').addEventListener('click', () => startWithPreset(10));
         }
     }
 
+    // Initial render
     render();
 });
