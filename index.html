@@ -8,18 +8,24 @@
     <title>Box Breathing</title>
     <link rel="manifest" href="manifest.json">
     <style>
+        :root {
+            --slider-width: 250px; /* Define slider width as variable */
+            --tick-container-height: 30px; /* Height for ticks container */
+        }
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: black;
-            color: #ffedd5;
+            color: #ffedd5; /* Light orange text */
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Align content towards the top */
             overflow: hidden;
+            padding-top: 2rem; /* Add some padding at the top */
+            box-sizing: border-box;
         }
 
         /* Offline notification styles */
@@ -28,7 +34,7 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: #92400e;
+            background-color: #92400e; /* Darker orange */
             color: white;
             padding: 8px 16px;
             border-radius: 4px;
@@ -41,10 +47,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            /* Remove justify-content to allow content flow */
+            min-height: calc(100vh - 2rem); /* Adjust height accounting for body padding */
             padding: 1rem;
             width: 100%;
+            max-width: 500px; /* Limit max width for better layout on wider screens */
             box-sizing: border-box;
         }
 
@@ -54,12 +61,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
+            z-index: 0; /* Canvas behind content */
         }
 
         #app-content {
             position: relative;
-            z-index: 1;
+            z-index: 1; /* Content above canvas */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -69,97 +76,139 @@
         h1 {
             font-size: 2.5rem;
             font-weight: bold;
-            margin-bottom: 4rem;
-            color: #fcd34d;
+            margin-bottom: 1rem; /* Reduced margin */
+            color: #fcd34d; /* Amber */
+            text-align: center;
         }
 
+        /* Styles for elements visible during exercise */
         .instruction {
             font-size: 2rem;
-            margin-bottom: 2rem;
-            color: #fdba74;
+            margin-top: 4rem; /* Add margin when exercise starts */
+            margin-bottom: 1rem;
+            color: #fdba74; /* Lighter orange */
+            min-height: 2.5rem; /* Reserve space */
         }
 
         .countdown {
             font-size: 4rem;
             font-weight: bold;
-            margin-bottom: 2.5rem;
-            color: #ff6b6b;
+            margin-bottom: 2rem;
+            color: #ff6b6b; /* Coral red */
+            min-height: 5rem; /* Reserve space */
+        }
+
+        /* Styles for elements on the home screen */
+         .settings {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem; /* Adjusted margin */
+            gap: 1rem;
+            width: 100%;
         }
 
         .prompt {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            color: #fde68a;
+            font-size: 1.2rem; /* Slightly smaller */
+            margin-bottom: 1.5rem; /* Adjusted margin */
+            color: #fde68a; /* Lighter amber */
+            min-height: 1.5rem; /* Reserve space */
         }
 
         .complete {
             font-size: 2rem;
-            margin-bottom: 2rem;
-            color: #4ade80;
+            margin-top: 4rem; /* Add margin */
+            margin-bottom: 1rem;
+            color: #4ade80; /* Green */
         }
 
         .timer {
-            position: fixed;
+            position: fixed; /* Keep timer fixed */
             top: 1rem;
             right: 1rem;
             color: #fde68a;
-            z-index: 2;
+            z-index: 2; /* Timer above other elements */
+            background-color: rgba(0,0,0,0.5); /* Slight background for visibility */
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
         }
 
         .form-group {
             display: flex;
             align-items: center;
-            margin-bottom: 1rem;
+            justify-content: center; /* Center form groups */
             gap: 0.5rem;
+            width: 100%;
+            max-width: 300px; /* Limit width */
         }
 
-        .settings {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 2rem;
-            gap: 1rem;
-        }
 
         input[type="number"] {
-            background-color: #78350f;
+            background-color: #78350f; /* Dark orange */
             color: #ffedd5;
-            border: 1px solid #d97706;
+            border: 1px solid #d97706; /* Amber */
             padding: 0.5rem;
             border-radius: 0.25rem;
             font-size: 16px;
+            width: 80px; /* Fixed width */
+            text-align: center;
         }
+        /* Hide spinner buttons */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+
 
         label {
             color: #fde68a;
             display: flex;
             align-items: center;
+            gap: 0.5rem; /* Gap between icon and text */
         }
 
+        /* General Button Styles */
         button {
             font-size: 1.25rem;
             padding: 0.75rem 1.5rem;
-            background: linear-gradient(to bottom, #d97706, #b45309);
+            background: linear-gradient(to bottom, #d97706, #b45309); /* Amber gradient */
             color: black;
             border: none;
             border-radius: 0.25rem;
             cursor: pointer;
-            display: flex;
+            display: inline-flex; /* Use inline-flex for icon alignment */
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            transition: background 0.2s ease; /* Smooth hover transition */
+            margin-top: 1rem; /* Add margin between elements */
         }
 
         button:hover {
-            background: linear-gradient(to bottom, #b45309, #92400e);
+            background: linear-gradient(to bottom, #b45309, #92400e); /* Darker amber gradient */
         }
 
+        /* Specific button adjustments if needed */
+        #toggle-play {
+            min-width: 120px; /* Ensure minimum width */
+        }
+         #reset {
+             margin-top: 2rem; /* More space above reset button */
+         }
+
+
+        /* Sound Toggle Switch */
         .switch {
             position: relative;
             display: inline-block;
-            width: 48px;
+            width: 48px; /* Slightly smaller */
             height: 24px;
+            flex-shrink: 0; /* Prevent shrinking in flex layout */
         }
 
         .switch input {
@@ -168,14 +217,14 @@
             height: 0;
         }
 
-        .slider {
+        .slider { /* This is the switch slider, rename if confusing */
             position: absolute;
             cursor: pointer;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #374151;
+            background-color: #374151; /* Gray */
             transition: .4s;
             border-radius: 24px;
         }
@@ -193,13 +242,14 @@
         }
 
         input:checked + .slider {
-            background-color: #d97706;
+            background-color: #d97706; /* Amber */
         }
 
         input:checked + .slider:before {
             transform: translateX(24px);
         }
 
+        /* Icons */
         .icon {
             display: inline-block;
             vertical-align: middle;
@@ -212,6 +262,7 @@
             stroke-linejoin: round;
         }
 
+        /* Shortcut Buttons */
         .shortcut-buttons {
             display: flex;
             gap: 0.5rem;
@@ -223,48 +274,98 @@
         .preset-button {
             font-size: 1rem;
             padding: 0.5rem 1rem;
-            background-color: #92400e;
+            background-color: #92400e; /* Darker orange */
             color: #ffedd5;
+            margin-top: 0; /* Reset margin for preset buttons */
         }
 
         .preset-button:hover {
-            background-color: #78350f;
+            background-color: #78350f; /* Even darker orange */
         }
 
-        /* Added styles for the phase time slider */
+        /* --- Phase Time Slider - Updated Styles --- */
         .slider-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
+            margin-top: 1.5rem; /* Space above */
+            margin-bottom: 1.5rem; /* Space below */
+            width: var(--slider-width); /* Use variable */
+            max-width: 90%; /* Prevent overflow on small screens */
         }
+
+        .slider-container label {
+             margin-bottom: var(--tick-container-height); /* Make space for ticks above slider */
+             font-size: 1rem;
+             color: #fde68a;
+        }
+
+        /* --- Ticks Container --- */
+        .slider-ticks-container {
+            display: flex;
+            justify-content: space-between; /* Evenly space tick wrappers */
+            width: 100%; /* Match slider width */
+            height: var(--tick-container-height); /* Defined height */
+            position: relative; /* Needed for potential absolute positioning inside */
+            padding: 0 10px; /* Adjust padding to align ticks with thumb ends */
+            box-sizing: border-box;
+            margin-bottom: -10px; /* Pull slider slightly closer */
+        }
+
+        .tick-wrapper {
+            display: flex;
+            flex-direction: column; /* Stack number above tick */
+            align-items: center; /* Center items horizontally */
+            justify-content: flex-end; /* Align items to the bottom (tick mark) */
+            height: 100%;
+        }
+
+        .tick-number {
+            font-size: 0.75rem;
+            color: #fde68a; /* Lighter amber */
+            line-height: 1;
+            margin-bottom: 4px; /* Space between number and tick */
+        }
+
+        .tick-mark {
+            width: 1px;
+            height: 8px; /* Height of the tick mark */
+            background-color: #fde68a; /* Lighter amber */
+        }
+        /* --- End Ticks Container --- */
+
 
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
-            width: 200px;
-            height: 10px;
-            background: #78350f;
+            width: 100%; /* Take full width of container */
+            height: 8px; /* Slightly thinner track */
+            background: #78350f; /* Dark orange track */
             border-radius: 5px;
             outline: none;
+            cursor: pointer;
+            margin-top: 5px; /* Add some space below label */
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
+            width: 20px; /* Slightly larger thumb */
             height: 20px;
-            background: #d97706;
+            background: #d97706; /* Amber thumb */
             border-radius: 50%;
             cursor: pointer;
+            border: 2px solid black; /* Add border for definition */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5); /* Subtle shadow */
         }
 
-        input[type="range"]::-moz-range-track {
-            width: 200px;
-            height: 10px;
+        /* --- Firefox Styles (match WebKit where possible) --- */
+         input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 8px;
             background: #78350f;
             border-radius: 5px;
+            cursor: pointer;
         }
 
         input[type="range"]::-moz-range-thumb {
@@ -273,16 +374,20 @@
             background: #d97706;
             border-radius: 50%;
             cursor: pointer;
+            border: 2px solid black;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
+        /* --- End Firefox Styles --- */
+
     </style>
 </head>
 <body>
-    <!-- Offline notification div -->
     <div id="offline-notification" style="display: none;">You are offline, but the app will work normally</div>
-    
+
     <div class="container">
         <canvas id="box-canvas"></canvas>
-        <div id="app-content"></div>
+        <div id="app-content">
+            </div>
     </div>
 
     <script src="app.js"></script>
