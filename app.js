@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         countdown: 4,
         totalTime: 0,
         soundEnabled: false, // Default sound OFF
+        hapticEnabled: false, // Default haptic OFF
         timeLimit: '',
         sessionComplete: false,
         timeLimitReached: false,
@@ -40,7 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
         volume2: `<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`,
         volumeX: `<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`,
         rotateCcw: `<svg class="icon" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`,
-        clock: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
+        clock: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+        vibrate: `<svg class="icon" viewBox="0 0 24 24"><path d="M3 15v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2M7 9v2m10-2v2m-5-5v2"></path></svg>`,
+        vibrateX: `<svg class="icon" viewBox="0 0 24 24"><path d="M3 15v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2M7 9v2m10-2v2m-5-5v2"></path><line x1="3" y1="3" x2="21" y2="21"></line></svg>`
     };
 
     function getInstruction(count) {
@@ -91,8 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // ------------------------------------
 
-    // --- Haptic Feedback Function Removed ---
-
     let interval;
     let animationFrameId;
     let lastStateUpdate;
@@ -130,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
-            // --- Haptic Feedback Call Removed ---
             state.totalTime = 0;
             state.countdown = state.phaseTime;
             state.count = 0;
@@ -176,6 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     }
 
+    function toggleHaptic() {
+        state.hapticEnabled = !state.hapticEnabled;
+        render();
+    }
+
     function handleTimeLimitChange(e) {
         state.timeLimit = e.target.value.replace(/[^0-9]/g, '');
     }
@@ -187,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
-        // --- Haptic Feedback Call Removed ---
         state.totalTime = 0;
         state.countdown = state.phaseTime;
         state.count = 0;
@@ -216,10 +220,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.pulseStartTime = performance.now(); // Trigger pulse
                 state.countdown = state.phaseTime;
                 playTone();
+                if (state.hapticEnabled) {
+                    navigator.vibrate(200);
+                }
                 if (state.count === 3 && state.timeLimitReached) { // Check if end of cycle AND time limit reached
                     state.sessionComplete = true;
                     state.isPlaying = false;
-                     // --- Haptic Feedback Call Removed ---
                     clearInterval(interval);
                     cancelAnimationFrame(animationFrameId);
                     releaseWakeLock();
@@ -303,6 +309,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         </label>
                     </div>
                     <div class="form-group">
+                        <label class="switch">
+                            <input type="checkbox" id="haptic-toggle" ${state.hapticEnabled ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                        <label for="haptic-toggle">
+                            ${state.hapticEnabled ? icons.vibrate : icons.vibrateX}
+                            Haptic ${state.hapticEnabled ? 'On' : 'Off'}
+                        </label>
+                    </div>
+                    <div class="form-group">
                         <input
                             type="number"
                             inputmode="numeric"
@@ -334,12 +350,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="slider-container">
                     <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
                     <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
-                    <div class="slider-labels">
-                        <span style="left: 0%;">3</span>
-                        <span style="left: 33.33%;">4</span>
-                        <span style="left: 66.66%;">5</span>
-                        <span style="left: 100%;">6</span>
-                    </div>
                 </div>
             `;
         }
@@ -377,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!state.isPlaying && !state.sessionComplete) {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
+            document.getElementById('haptic-toggle').addEventListener('change', toggleHaptic);
             const timeLimitInput = document.getElementById('time-limit');
             if (timeLimitInput) timeLimitInput.addEventListener('input', handleTimeLimitChange);
 
