@@ -4,27 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.container');
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
-
-    // --- Sound Fix: Create AudioContext early ---
-    let audioContext;
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        // Start suspended, resume on user interaction
-        if (audioContext.state === 'running') {
-            audioContext.suspend();
-        }
-    } catch (e) {
-        console.error('Web Audio API is not supported in this browser');
-        audioContext = null; // Ensure audioContext is null if creation failed
-    }
-    // ------------------------------------------
-
+    
     const state = {
         isPlaying: false,
         count: 0,
         countdown: 4,
         totalTime: 0,
-        soundEnabled: false, // Default sound OFF [cite: 142]
+        soundEnabled: false,
         timeLimit: '',
         sessionComplete: false,
         timeLimitReached: false,
@@ -33,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let wakeLock = null;
+    let audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     const icons = {
         play: `<svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
@@ -59,51 +46,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // --- Sound Fix: Function to resume context ---
-    function resumeAudioContext() {
-        if (audioContext && audioContext.state === 'suspended') {
-            audioContext.resume().then(() => {
-                console.log('AudioContext resumed successfully');
-            }).catch(e => console.error('Error resuming AudioContext:', e));
-        }
-    }
-    // ------------------------------------------
-
-    // --- Sound Fix: Modified playTone ---
     function playTone() {
-        // Check sound enabled, context exists, and context is running
-        if (state.soundEnabled && audioContext && audioContext.state === 'running') {
+        if (state.soundEnabled && audioContext) {
             try {
                 const oscillator = audioContext.createOscillator();
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
                 oscillator.connect(audioContext.destination);
                 oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.1); // Play for 0.1 seconds
+                oscillator.stop(audioContext.currentTime + 0.1);
             } catch (e) {
                 console.error('Error playing tone:', e);
             }
-        } else if (state.soundEnabled && audioContext && audioContext.state !== 'running') {
-             console.log('AudioContext not running, cannot play tone yet.');
-             // Attempt to resume, might be needed if context suspended unexpectedly
-             resumeAudioContext();
         }
     }
-    // ------------------------------------
-
-    // --- Haptic Feedback: Function ---
-    function triggerHaptic(pattern) {
-        if ('vibrate' in navigator) {
-            try {
-                navigator.vibrate(pattern);
-            } catch (e) {
-                console.error('Haptic feedback failed:', e);
-            }
-        } else {
-            console.log('Haptic feedback not supported');
-        }
-    }
-    // ---------------------------------
 
     let interval;
     let animationFrameId;
@@ -136,21 +92,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function togglePlay() {
-        // --- Sound Fix: Resume context on interaction ---
-        resumeAudioContext();
-        // ---------------------------------------------
-
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
-            // --- Haptic Feedback: Start ---
-            triggerHaptic([100]); // Short vibration on start
-            // -----------------------------
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('AudioContext resumed');
+                });
+            }
             state.totalTime = 0;
             state.countdown = state.phaseTime;
             state.count = 0;
             state.sessionComplete = false;
             state.timeLimitReached = false;
-            playTone(); // Attempt first tone
+            playTone();
             startInterval();
             animate();
             requestWakeLock();
@@ -181,11 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleSound() {
-        // --- Sound Fix: Resume context if turning sound ON ---
-        if (!state.soundEnabled) { // If sound is currently OFF and will be turned ON
-             resumeAudioContext();
-        }
-        // ---------------------------------------------------
         state.soundEnabled = !state.soundEnabled;
         render();
     }
@@ -195,21 +144,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startWithPreset(minutes) {
-         // --- Sound Fix: Resume context on interaction ---
-        resumeAudioContext();
-        // ---------------------------------------------
-
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
-         // --- Haptic Feedback: Start ---
-        triggerHaptic([100]); // Short vibration on start
-        // -----------------------------
         state.totalTime = 0;
         state.countdown = state.phaseTime;
         state.count = 0;
         state.sessionComplete = false;
         state.timeLimitReached = false;
-        playTone(); // Attempt first tone
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+                console.log('AudioContext resumed');
+            });
+        }
+        playTone();
         startInterval();
         animate();
         requestWakeLock();
@@ -229,15 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (state.countdown === 1) {
                 state.count = (state.count + 1) % 4;
-                state.pulseStartTime = performance.now(); // Trigger pulse
+                state.pulseStartTime = performance.now();
                 state.countdown = state.phaseTime;
                 playTone();
-                if (state.count === 3 && state.timeLimitReached) { // Check if end of cycle AND time limit reached
+                if (state.count === 3 && state.timeLimitReached) {
                     state.sessionComplete = true;
                     state.isPlaying = false;
-                     // --- Haptic Feedback: Complete ---
-                    triggerHaptic([100, 50, 100]); // Double vibration on complete
-                    // --------------------------------
                     clearInterval(interval);
                     cancelAnimationFrame(animationFrameId);
                     releaseWakeLock();
@@ -246,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.countdown -= 1;
             }
             lastStateUpdate = performance.now();
-            render(); // Render needs to be called after state changes
+            render();
         }, 1000);
     }
 
@@ -260,12 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const phase = state.count;
         const size = Math.min(canvas.width, canvas.height) * 0.6;
         const left = (canvas.width - size) / 2;
-        const top = (canvas.height - size) / 2 + 120; // Adjusted top position
+        const top = (canvas.height - size) / 2 + 120;
         const points = [
-            {x: left, y: top + size},       // Bottom-left
-            {x: left, y: top},             // Top-left
-            {x: left + size, y: top},      // Top-right
-            {x: left + size, y: top + size} // Bottom-right
+            {x: left, y: top + size},
+            {x: left, y: top},
+            {x: left + size, y: top},
+            {x: left + size, y: top + size}
         ];
         const startPoint = points[phase];
         const endPoint = points[(phase + 1) % 4];
@@ -274,23 +218,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        ctx.strokeStyle = '#d97706'; // Amber color for the box
+        ctx.strokeStyle = '#d97706';
         ctx.lineWidth = 2;
         ctx.strokeRect(left, top, size, size);
 
-        // Pulse effect
         let radius = 5;
         if (state.pulseStartTime !== null) {
             const pulseElapsed = (performance.now() - state.pulseStartTime) / 1000;
-            if (pulseElapsed < 0.5) { // 0.5-second pulse duration
-                const pulseFactor = Math.sin(Math.PI * pulseElapsed / 0.5); // Use sine wave for smooth pulse
-                radius = 5 + 5 * pulseFactor; // Radius from 5 to 10 and back
+            if (pulseElapsed < 0.5) {
+                const pulseFactor = Math.sin(Math.PI * pulseElapsed / 0.5);
+                radius = 5 + 5 * pulseFactor;
             }
         }
 
         ctx.beginPath();
         ctx.arc(currentX, currentY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#ff0000'; // Red color for the dot
+        ctx.fillStyle = '#ff0000';
         ctx.fill();
 
         animationFrameId = requestAnimationFrame(animate);
@@ -329,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             id="time-limit"
                             step="1"
                             min="0"
-                            >
+                        >
                         <label for="time-limit">Minutes (optional)</label>
                     </div>
                 </div>
@@ -348,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
         if (!state.isPlaying && !state.sessionComplete) {
-             html += `
+            html += `
                 <div class="slider-container">
                     <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
                     <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
@@ -380,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         app.innerHTML = html;
 
-        // Re-attach event listeners after rendering
         if (!state.sessionComplete) {
             document.getElementById('toggle-play').addEventListener('click', togglePlay);
         }
@@ -390,31 +332,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.isPlaying && !state.sessionComplete) {
             document.getElementById('sound-toggle').addEventListener('change', toggleSound);
             const timeLimitInput = document.getElementById('time-limit');
-            if (timeLimitInput) timeLimitInput.addEventListener('input', handleTimeLimitChange);
-
+            timeLimitInput.addEventListener('input', handleTimeLimitChange);
             const phaseTimeSlider = document.getElementById('phase-time-slider');
-             if (phaseTimeSlider) {
-                phaseTimeSlider.addEventListener('input', function() {
-                    state.phaseTime = parseInt(this.value);
-                    // Update countdown immediately if slider changed while paused at start
-                    if (!state.isPlaying && state.totalTime === 0) {
-                         state.countdown = state.phaseTime;
-                    }
-                    // Update the displayed value
-                    const phaseTimeValueSpan = document.getElementById('phase-time-value');
-                    if(phaseTimeValueSpan) phaseTimeValueSpan.textContent = state.phaseTime;
-
-                });
-            }
-
-            const preset2 = document.getElementById('preset-2min');
-            const preset5 = document.getElementById('preset-5min');
-            const preset10 = document.getElementById('preset-10min');
-            if (preset2) preset2.addEventListener('click', () => startWithPreset(2));
-            if (preset5) preset5.addEventListener('click', () => startWithPreset(5));
-            if (preset10) preset10.addEventListener('click', () => startWithPreset(10));
+            phaseTimeSlider.addEventListener('input', function() {
+                state.phaseTime = parseInt(this.value);
+                document.getElementById('phase-time-value').textContent = state.phaseTime;
+            });
+            document.getElementById('preset-2min').addEventListener('click', () => startWithPreset(2));
+            document.getElementById('preset-5min').addEventListener('click', () => startWithPreset(5));
+            document.getElementById('preset-10min').addEventListener('click', () => startWithPreset(10));
         }
     }
 
-    render(); // Initial render
+    render();
 });
