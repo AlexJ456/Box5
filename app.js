@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         count: 0,
         countdown: 4,
         totalTime: 0,
-        soundEnabled: false, // Default sound OFF
+        soundEnabled: false, // Default sound OFF [cite: 142]
         timeLimit: '',
         sessionComplete: false,
         timeLimitReached: false,
@@ -91,7 +91,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // ------------------------------------
 
-    // --- Haptic Feedback Function Removed ---
+    // --- Haptic Feedback: Function ---
+    function triggerHaptic(pattern) {
+        if ('vibrate' in navigator) {
+            try {
+                navigator.vibrate(pattern);
+            } catch (e) {
+                console.error('Haptic feedback failed:', e);
+            }
+        } else {
+            console.log('Haptic feedback not supported');
+        }
+    }
+    // ---------------------------------
 
     let interval;
     let animationFrameId;
@@ -130,7 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
-            // --- Haptic Feedback Call Removed ---
+            // --- Haptic Feedback: Start ---
+            triggerHaptic([100]); // Short vibration on start
+            // -----------------------------
             state.totalTime = 0;
             state.countdown = state.phaseTime;
             state.count = 0;
@@ -187,7 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
-        // --- Haptic Feedback Call Removed ---
+         // --- Haptic Feedback: Start ---
+        triggerHaptic([100]); // Short vibration on start
+        // -----------------------------
         state.totalTime = 0;
         state.countdown = state.phaseTime;
         state.count = 0;
@@ -219,7 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (state.count === 3 && state.timeLimitReached) { // Check if end of cycle AND time limit reached
                     state.sessionComplete = true;
                     state.isPlaying = false;
-                     // --- Haptic Feedback Call Removed ---
+                     // --- Haptic Feedback: Complete ---
+                    triggerHaptic([100, 50, 100]); // Double vibration on complete
+                    // --------------------------------
                     clearInterval(interval);
                     cancelAnimationFrame(animationFrameId);
                     releaseWakeLock();
