@@ -91,8 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // ------------------------------------
 
-    // --- Haptic Feedback Function Removed ---
-
     let interval;
     let animationFrameId;
     let lastStateUpdate;
@@ -130,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.isPlaying = !state.isPlaying;
         if (state.isPlaying) {
-            // --- Haptic Feedback Call Removed ---
             state.totalTime = 0;
             state.countdown = state.phaseTime;
             state.count = 0;
@@ -187,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.timeLimit = minutes.toString();
         state.isPlaying = true;
-        // --- Haptic Feedback Call Removed ---
         state.totalTime = 0;
         state.countdown = state.phaseTime;
         state.count = 0;
@@ -219,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (state.count === 3 && state.timeLimitReached) { // Check if end of cycle AND time limit reached
                     state.sessionComplete = true;
                     state.isPlaying = false;
-                     // --- Haptic Feedback Call Removed ---
                     clearInterval(interval);
                     cancelAnimationFrame(animationFrameId);
                     releaseWakeLock();
@@ -228,12 +223,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.countdown -= 1;
             }
             lastStateUpdate = performance.now();
-            render(); // Render needs to be called after state changes
+            // NO render() call here during exercise to avoid changing the screen
+            // We only need render() if state.sessionComplete becomes true, handled below
+            if (state.sessionComplete) {
+                render(); // Render the completion screen
+            }
         }, 1000);
     }
 
     function animate() {
-        if (!state.isPlaying) return;
+        // Only render canvas if playing
+        if (!state.isPlaying) {
+            // Ensure canvas is clear if animation stops unexpectedly
+             const ctx = canvas.getContext('2d');
+             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+
         const ctx = canvas.getContext('2d');
         const elapsed = (performance.now() - lastStateUpdate) / 1000;
         const effectiveCountdown = state.countdown - elapsed;
@@ -242,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const phase = state.count;
         const size = Math.min(canvas.width, canvas.height) * 0.6;
         const left = (canvas.width - size) / 2;
-        const top = (canvas.height - size) / 2 + 120; // Adjusted top position
+        const top = (canvas.height - size) / 2 + 120; // Adjusted top position to make space for title/info
         const points = [
             {x: left, y: top + size},       // Bottom-left
             {x: left, y: top},             // Top-left
@@ -267,6 +273,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pulseElapsed < 0.5) { // 0.5-second pulse duration
                 const pulseFactor = Math.sin(Math.PI * pulseElapsed / 0.5); // Use sine wave for smooth pulse
                 radius = 5 + 5 * pulseFactor; // Radius from 5 to 10 and back
+                // Optimization: Stop checking pulse time after duration
+                if (pulseElapsed >= 0.5) state.pulseStartTime = null;
+            } else {
+                 state.pulseStartTime = null; // Reset if animation frame missed the end
             }
         }
 
@@ -279,16 +289,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function render() {
+        // --- This function now controls what's visible based on state ---
+        // --- It NO LONGER renders the instruction/countdown during the exercise ---
+        // --- The canvas animation runs independently via animate() ---
+
         let html = `
             <h1>Box Breathing</h1>
         `;
-        if (state.isPlaying) {
-            html += `
-                <div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
-                <div class="instruction">${getInstruction(state.count)}</div>
-                <div class="countdown">${state.countdown}</div>
-            `;
-        }
+
+        // --- Content for Home Screen (Not Playing, Not Complete) ---
         if (!state.isPlaying && !state.sessionComplete) {
             html += `
                 <div class="settings">
@@ -315,38 +324,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label for="time-limit">Minutes (optional)</label>
                     </div>
                 </div>
-                <div class="prompt">Press start to begin</div>
-            `;
-        }
-        if (state.sessionComplete) {
-            html += `<div class="complete">Complete!</div>`;
-        }
-        if (!state.sessionComplete) {
-            html += `
-                <button id="toggle-play">
-                    ${state.isPlaying ? icons.pause : icons.play}
-                    ${state.isPlaying ? 'Pause' : 'Start'}
-                </button>
-            `;
-        }
-        if (!state.isPlaying && !state.sessionComplete) {
-             html += `
+
                 <div class="slider-container">
-                    <label for="phase-time-slider">Phase Time (seconds): <span id="phase-time-value">${state.phaseTime}</span></label>
+                    <label for="phase-time-slider">Phase Time: <span id="phase-time-value">${state.phaseTime}</span>s</label>
+                    <div class="slider-ticks-container">
+                        <div class="tick-wrapper"><span class="tick-number">3</span><div class="tick-mark"></div></div>
+                        <div class="tick-wrapper"><span class="tick-number">4</span><div class="tick-mark"></div></div>
+                        <div class="tick-wrapper"><span class="tick-number">5</span><div class="tick-mark"></div></div>
+                        <div class="tick-wrapper"><span class="tick-number">6</span><div class="tick-mark"></div></div>
+                    </div>
                     <input type="range" min="3" max="6" step="1" value="${state.phaseTime}" id="phase-time-slider">
                 </div>
-            `;
-        }
-        if (state.sessionComplete) {
-            html += `
-                <button id="reset">
-                    ${icons.rotateCcw}
-                    Back to Start
+
+                <div class="prompt">Press start to begin</div>
+
+                 <button id="toggle-play">
+                    ${icons.play} Start
                 </button>
-            `;
-        }
-        if (!state.isPlaying && !state.sessionComplete) {
-            html += `
+
                 <div class="shortcut-buttons">
                     <button id="preset-2min" class="preset-button">
                         ${icons.clock} 2 min
@@ -360,17 +355,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
+        // --- Content for Playing Screen ---
+        else if (state.isPlaying) {
+             html += `
+                <div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
+                <div class="instruction">${getInstruction(state.count)}</div>
+                <div class="countdown">${state.countdown}</div>
+                 <button id="toggle-play">
+                    ${icons.pause} Pause
+                </button>
+            `; // Add pause button
+        }
+        // --- Content for Completion Screen ---
+        else if (state.sessionComplete) {
+            html += `
+                <div class="complete">Complete!</div>
+                <div class="timer">Total Time: ${formatTime(state.totalTime)}</div>
+                 <button id="reset">
+                    ${icons.rotateCcw}
+                    Back to Start
+                </button>
+            `;
+        }
+
+        // --- Render the generated HTML ---
         app.innerHTML = html;
 
-        // Re-attach event listeners after rendering
-        if (!state.sessionComplete) {
-            document.getElementById('toggle-play').addEventListener('click', togglePlay);
+        // --- Re-attach Event Listeners necessary for the current screen ---
+        const togglePlayButton = document.getElementById('toggle-play');
+        if (togglePlayButton) {
+            togglePlayButton.addEventListener('click', togglePlay);
         }
-        if (state.sessionComplete) {
-            document.getElementById('reset').addEventListener('click', resetToStart);
+
+        const resetButton = document.getElementById('reset');
+        if (resetButton) {
+            resetButton.addEventListener('click', resetToStart);
         }
+
+        // --- Listeners only needed on the Home Screen ---
         if (!state.isPlaying && !state.sessionComplete) {
-            document.getElementById('sound-toggle').addEventListener('change', toggleSound);
+            const soundToggle = document.getElementById('sound-toggle');
+            if (soundToggle) soundToggle.addEventListener('change', toggleSound);
+
             const timeLimitInput = document.getElementById('time-limit');
             if (timeLimitInput) timeLimitInput.addEventListener('input', handleTimeLimitChange);
 
@@ -385,7 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update the displayed value
                     const phaseTimeValueSpan = document.getElementById('phase-time-value');
                     if(phaseTimeValueSpan) phaseTimeValueSpan.textContent = state.phaseTime;
-
                 });
             }
 
@@ -398,5 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    render(); // Initial render
+    // Initial render of the home screen
+    render();
+
 });
