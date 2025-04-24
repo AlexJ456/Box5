@@ -231,9 +231,8 @@
             background-color: #78350f;
         }
 
-        /* Styles for the phase time slider */
+        /* Added styles for the phase time slider */
         .slider-container {
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -251,28 +250,6 @@
             outline: none;
         }
 
-        input[type="range"]::-webkit-slider-runnable-track {
-            background-color: #78350f;
-            background-image: 
-                linear-gradient(to bottom, #d97706, #d97706),
-                linear-gradient(to bottom, #d97706, #d97706),
-                linear-gradient(to bottom, #d97706, #d97706),
-                linear-gradient(to bottom, #d97706, #d97706);
-            background-position: 
-                0% 0%,
-                33.33% 0%,
-                66.66% 0%,
-                100% 0%;
-            background-size: 
-                2px 100%,
-                2px 100%,
-                2px 100%,
-                2px 100%;
-            background-repeat: no-repeat;
-            height: 10px;
-            border-radius: 5px;
-        }
-
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -284,24 +261,9 @@
         }
 
         input[type="range"]::-moz-range-track {
-            background-color: #78350f;
-            background-image: 
-                linear-gradient(to bottom, #d97706, #d97706),
-                linear-gradient(to bottom, #d97706, #d97706),
-                linear-gradient(to bottom, #d97706, #d97706),
-                linear-gradient(to bottom, #d97706, #d97706);
-            background-position: 
-                0% 0%,
-                33.33% 0%,
-                66.66% 0%,
-                100% 0%;
-            background-size: 
-                2px 100%,
-                2px 100%,
-                2px 100%,
-                2px 100%;
-            background-repeat: no-repeat;
+            width: 200px;
             height: 10px;
+            background: #78350f;
             border-radius: 5px;
         }
 
@@ -311,20 +273,6 @@
             background: #d97706;
             border-radius: 50%;
             cursor: pointer;
-        }
-
-        .slider-labels {
-            position: absolute;
-            bottom: -20px;
-            width: 200px;
-            height: 20px;
-        }
-
-        .slider-labels span {
-            position: absolute;
-            transform: translateX(-50%);
-            color: #fde68a;
-            font-size: 14px;
         }
     </style>
 </head>
